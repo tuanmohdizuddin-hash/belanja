@@ -107,7 +107,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .field:focus-within{border-color:var(--line-gold);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
 .field input{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:16px;padding:16px 0;min-width:0}
 .field input::placeholder{color:var(--faint)}
-.mic{width:58px;border-radius:18px;border:0;cursor:pointer;background:var(--g-silver);color:#1b1c22;display:grid;place-items:center;
+.mic{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;width:58px;border-radius:18px;border:0;cursor:pointer;background:var(--g-silver);color:#1b1c22;display:grid;place-items:center;
   position:relative;flex-shrink:0;box-shadow:0 10px 24px -10px rgba(201,204,211,.5), inset 0 1px 0 #fff;transition:transform .15s}
 .mic:active{transform:scale(.95)}
 .mic svg{width:24px;height:24px}
@@ -260,7 +260,7 @@ footer{text-align:center;color:var(--faint);font-size:12px;margin-top:30px;lette
       <h3>Rekod Perbelanjaan <span class="pill" style="text-transform:none;letter-spacing:0">🎙 Suara / ⌨ Taip</span></h3>
       <form class="composer" id="form" autocomplete="off">
         <div class="field">
-          <input id="txt" placeholder="cth: nasi lemak 5.50, grab 12" aria-label="Perbelanjaan">
+          <input id="txt" placeholder="cth: nasi lemak 5.50, grab 12" aria-label="Perbelanjaan" enterkeyhint="send" autocapitalize="off" spellcheck="false">
         </div>
         <button type="button" class="mic" id="mic" aria-label="Rekod suara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg></button>
         <button type="submit" class="add">Tambah</button>
@@ -485,35 +485,109 @@ function setManualCat(c){ manualCat = c || null; renderChips(); renderPreview(tx
 $('#catChips').onclick = e => { const b = e.target.closest('.chip'); if (b) setManualCat(b.dataset.c); };
 
 /* ---------- voice ---------- */
+/* Chrome Android is unreliable with the Web Speech API:
+   - `onend` sometimes never fires, so a plain `listening` flag stays true and every
+     later tap only calls stop() on a dead recognizer (the "works once" bug);
+   - each result repeats the whole phrase heard so far;
+   - starting again too soon after the last session can fail silently.
+   So each tap gets a fresh recognizer, events from older ones are ignored, watchdog
+   timers always bring the button back, and a silent failure is retried once. */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null, listening = false, finalText = '';
+const V = { rec:null, state:'idle', heard:'', final:'', started:false, retried:false, lastEnd:0, timers:[] };
+let listening = false;
 function setListening(on){
   listening = on; $('#mic').classList.toggle('on', on); $('#fab').classList.toggle('on', on);
+  $('#mic').setAttribute('aria-label', on ? 'Berhenti rekod' : 'Rekod suara');
   if (on) $('#preview').innerHTML = '<span class="listening"><span class="wave"><i></i><i></i><i></i><i></i></span> Sedang mendengar… sebut item & harga</span>';
 }
-function startVoice(){
-  if (!SR){ toast('Pelayar ini tidak menyokong input suara. Cuba Chrome / Safari terkini.'); return; }
-  if (listening){ rec && rec.stop(); return; }
-  rec = new SR(); rec.lang = 'ms-MY'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-  finalText = '';
-  rec.onstart = () => setListening(true);
-  rec.onresult = e => {
-    let interim = ''; finalText = '';
-    for (const r of e.results){ if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript; }
-    txt.value = (finalText || interim).trim(); renderPreview(txt.value);
-  };
-  rec.onerror = e => { setListening(false);
-    toast(e.error === 'not-allowed' ? 'Sila benarkan akses mikrofon.' : e.error === 'no-speech' ? 'Tiada suara dikesan. Cuba lagi.' : 'Ralat suara: ' + e.error); };
-  rec.onend = () => {
-    setListening(false);
-    const v = (finalText || txt.value).trim();
-    if (v){ if (addEntries(parse(v))) { txt.value=''; renderPreview(''); } else renderPreview(v, true); }
-    else renderPreview('');
-  };
-  try { rec.start(); } catch { setListening(false); }
+function vLater(fn, ms){ V.timers.push(setTimeout(fn, ms)); }
+function vClear(){ V.timers.forEach(clearTimeout); V.timers = []; }
+// Join results without the Android duplication ("nasi nasi lemak nasi lemak 5").
+function joinResults(results){
+  let out = '';
+  for (const r of results){
+    const t = (r[0] && r[0].transcript || '').trim(); if (!t) continue;
+    const lo = out.toLowerCase(), tl = t.toLowerCase();
+    if (!out || tl.startsWith(lo)) out = t;
+    else if (!lo.includes(tl)) out += ' ' + t;
+  }
+  return out;
 }
+// Ends a session exactly once, whichever of onend / onerror / watchdog comes first.
+function vFinish(r, opt = {}){
+  if (r !== V.rec) return;
+  vClear();
+  r.onstart = r.onaudiostart = r.onresult = r.onerror = r.onend = null;
+  try { r.abort(); } catch {}
+  V.rec = null; V.state = 'idle'; V.lastEnd = Date.now();
+  setListening(false);
+  const v = opt.discard ? '' : (V.final || V.heard).trim();
+  if (!v && !V.started && !opt.noRetry && !V.retried){ // failed silently: retry once
+    V.retried = true; setListening(true); vLater(() => vStart(true), 450); return;
+  }
+  if (v){
+    txt.value = v;
+    if (addEntries(parse(v))) { txt.value = ''; renderPreview(''); } else renderPreview(v, true);
+  } else {
+    renderPreview('');
+    if (opt.msg) toast(opt.msg);
+  }
+}
+function vStart(isRetry){
+  if (!SR){ toast('Pelayar ini tidak menyokong input suara. Cuba Chrome / Safari terkini.'); return; }
+  if (!window.isSecureContext){ toast('Input suara perlukan pautan https:// (cth: GitHub Pages).'); return; }
+  vClear();                                              // cancel any pending retry / delayed start
+  const wait = 400 - (Date.now() - V.lastEnd);           // give Android time to release the mic
+  if (wait > 0){ V.state = 'starting'; setListening(true); vLater(() => { V.state = 'idle'; vStart(isRetry); }, wait); return; }
+  if (!isRetry) V.retried = false;
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // tutup papan kekunci
+  const r = new SR();
+  r.lang = 'ms-MY'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+  V.rec = r; V.state = 'starting'; V.heard = ''; V.final = ''; V.started = false;
+  r.onstart = r.onaudiostart = () => { if (r !== V.rec) return; V.started = true; if (V.state === 'starting') V.state = 'listening'; };
+  r.onresult = e => {
+    if (r !== V.rec) return;
+    V.started = true;
+    const t = joinResults(e.results);
+    const last = e.results[e.results.length - 1];
+    V.heard = t; txt.value = t; renderPreview(t);
+    if (last && last.isFinal){                              // got the phrase: finish even if onend never comes
+      V.final = t; V.state = 'stopping';
+      try { r.stop(); } catch {}
+      vLater(() => vFinish(r), 1000);
+    }
+  };
+  r.onerror = e => {
+    if (r !== V.rec) return;
+    const m = {
+      'not-allowed': 'Sila benarkan akses mikrofon (ikon 🔒 di bar alamat → Mikrofon → Benarkan).',
+      'service-not-allowed': 'Sila benarkan akses mikrofon untuk laman ini.',
+      'no-speech': 'Tiada suara dikesan. Tekan 🎙 dan cuba lagi.',
+      'audio-capture': 'Mikrofon tidak dijumpai atau sedang digunakan aplikasi lain.',
+      'network': 'Input suara perlukan internet. Sila taip dahulu.',
+      'language-not-supported': 'Bahasa Melayu tidak disokong oleh peranti ini.'
+    }[e.error];
+    const fatal = ['not-allowed','service-not-allowed','audio-capture','language-not-supported','no-speech'].includes(e.error);
+    vFinish(r, { msg: e.error === 'aborted' ? '' : (m || 'Ralat suara (' + e.error + '). Cuba lagi.'), noRetry: fatal });
+  };
+  r.onend = () => vFinish(r);
+  setListening(true);
+  vLater(() => { if (r === V.rec && V.state === 'starting' && !V.started) vFinish(r, { msg: 'Mikrofon tidak bermula. Tekan 🎙 sekali lagi.' }); }, 6000);
+  vLater(() => { if (r === V.rec){ V.state = 'stopping'; try { r.stop(); } catch {} vLater(() => vFinish(r), 1500); } }, 20000);
+  try { r.start(); } catch (err) { vFinish(r, { msg: 'Tidak dapat mula rekod. Tekan 🎙 sekali lagi.' }); }
+}
+function vStop(){
+  const r = V.rec;
+  if (!r){ vClear(); V.state = 'idle'; setListening(false); renderPreview(''); return; } // tap during start delay = cancel
+  if (V.state === 'stopping'){ vFinish(r); return; }       // second tap: finish now
+  V.state = 'stopping';
+  try { r.stop(); } catch {}
+  vLater(() => vFinish(r), 1500);                          // in case onend never fires
+}
+function startVoice(){ (V.rec || V.state !== 'idle') ? vStop() : vStart(false); }
 $('#mic').onclick = startVoice;
-$('#fab').onclick = () => { $('#inputCard').scrollIntoView({behavior:'smooth', block:'center'}); startVoice(); };
+$('#fab').onclick = () => { $('#inputCard').scrollIntoView({behavior:'smooth', block:'center'}); if (!V.rec && V.state === 'idle') startVoice(); else vStop(); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && V.rec) vFinish(V.rec, { discard:true, noRetry:true }); });
 
 /* ---------- aggregates ---------- */
 function sumBetween(a, b){ return state.tx.reduce((s,t)=> t.ts>=a && t.ts<b ? s+t.amount : s, 0); }
