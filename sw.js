@@ -1,4 +1,4 @@
-const CACHE = 'belanja-v3';
+const CACHE = 'belanja-v4';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg', './report.html'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener('activate', e => {

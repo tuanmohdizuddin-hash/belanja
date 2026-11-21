@@ -5,7 +5,7 @@ Aplikasi web (PWA) untuk menjejak perbelanjaan harian menggunakan **suara** atau
 ## Ciri-ciri
 - 🎙 **Input suara** (Bahasa Melayu, `ms-MY`) — sebut sahaja: *"nasi lemak lima ringgit lima puluh sen"*
 - ⌨ **Input taip bahasa biasa** — `teh tarik 2.50 dan roti canai 1.50` (banyak item sekaligus)
-- ✨ **Kategori automatik** (Makanan, Pengangkutan, Bil, Barang Dapur, Shopping, Hiburan, Kesihatan) — boleh pilih manual
+- ✨ **Kategori automatik** (Makanan, **Perodua 524**, Pengangkutan, Bil, Barang Dapur, Shopping, Hiburan, Kesihatan) — boleh pilih manual
 - 📅 Faham `semalam` / `kelmarin`
 - 📊 Dashboard: jumlah bulan ini, bajet & baki harian, trend 7/14/30 hari, carta kategori, insight & unjuran akhir bulan
 - ✏️ Edit / padam transaksi, butang **Batal** (undo), carian

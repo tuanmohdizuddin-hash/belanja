@@ -268,7 +268,7 @@ footer{text-align:center;color:var(--faint);font-size:12px;margin-top:30px;lette
       <div class="preview" id="preview"></div>
       <div class="chips" id="catChips"></div>
       <div class="hint">Cakap atau taip macam biasa — kategori dikesan automatik.<br>
-        <code>teh tarik 2.50 dan roti canai 1.50</code> · <code>minyak kereta lima puluh ringgit</code> · <code>bil elektrik 120 semalam</code></div>
+        <code>teh tarik 2.50 dan roti canai 1.50</code> · <code>servis Perodua 524 180</code> · <code>bil elektrik 120 semalam</code></div>
     </section>
 
     <!-- BAR CHART -->
@@ -344,7 +344,8 @@ let state = store.load() || { tx: [], budget: 1500, name: '' };
 /* ---------- categories ---------- */
 const CATS = {
   makanan:   {n:'Makanan & Minuman', e:'🍽', c:'#d4af37', k:['makan','nasi','mee','mi ','roti','teh','kopi','air','minum','sarapan','lunch','dinner','makan malam','tengah hari','kfc','mcd','mcdonald','pizza','burger','ayam','ikan','daging','kuih','cendol','laksa','satay','sate','starbucks','zus','tealive','bubble','tomyam','tom yam','char kuey','kedai makan','mamak','restoran','food','foodpanda','grabfood','shopee food','buah','kek','biskut','snek','jajan']},
-  transport: {n:'Pengangkutan', e:'🚗', c:'#c9ccd3', k:['minyak','petrol','diesel','grab','teksi','taxi','bas','lrt','mrt','ktm','tol','parking','letak kereta','kereta','motor','servis','tayar','touch n go','tng','reload tng','e-hailing','indrive','tiket bas','flight','tiket kapal']},
+  perodua:   {n:'Perodua 524', e:'🚙', c:'#7fa7c9', k:['perodua','produa','pedua','524','myvi','axia','bezza','alza','aruz','ativa','kereta','servis','service','tayar','minyak kereta','minyak hitam','bateri kereta','road tax','roadtax','cukai jalan','insurans kereta','takaful kereta','ansuran kereta','bayar kereta','cuci kereta','car wash','alignment','balancing','wiper','aircond kereta','bengkel','puspakom','saman']},
+  transport: {n:'Pengangkutan', e:'🚌', c:'#c9ccd3', k:['minyak','petrol','diesel','grab','teksi','taxi','bas','lrt','mrt','ktm','tol','parking','letak kereta','motor','touch n go','tng','reload tng','e-hailing','indrive','tiket bas','flight','tiket kapal']},
   bil:       {n:'Bil & Utiliti', e:'💡', c:'#b08d57', k:['bil','elektrik','tnb','air syabas','air selangor','internet','unifi','wifi','astro','telefon','prepaid','postpaid','topup','top up','reload','sewa','rumah','ansuran','loan','pinjaman','insurans','takaful','cukai','zakat','yuran']},
   barang:    {n:'Barang Dapur', e:'🛒', c:'#e8d9a8', k:['barang','dapur','groceries','grocery','pasar','mydin','lotus','tesco','aeon','giant','econsave','99 speedmart','speedmart','7-eleven','7 eleven','kk mart','sayur','beras','telur','susu','gula','minyak masak','sabun','syampu','ubat gigi','pampers','lampin']},
   shopping:  {n:'Shopping', e:'🛍', c:'#b76e79', k:['baju','kasut','seluar','tudung','beg','shopee','lazada','tiktok shop','zalora','uniqlo','jam','gadget','phone case','kosmetik','makeup','minyak wangi','perfume','hadiah']},
@@ -390,6 +391,8 @@ const FILLER = /\b(saya|aku|tadi|baru|beli|bayar|bayaran|untuk|harga|sebanyak|ko
 
 function parseOne(raw, baseDate){
   let s = ' ' + raw.trim() + ' ';
+  // "Perodua 524" is the car's name (plate no.), not an amount
+  s = s.replace(/\b(?:pero?dua|produa|pedua|kereta|myvi|axia|bezza|alza|aruz|ativa)\s+(?:524|lima\s+dua\s+empat|lima\s+ratus\s+dua\s+puluh\s+empat)\b(?!\s*(?:ringgit|rm|sen|\.\d))/gi, ' PeroduaKereta ');
   let date = new Date(baseDate);
   if (/\b(kelmarin|lusa lepas)\b/i.test(s)) date.setDate(date.getDate()-2);
   else if (/\b(semalam|yesterday)\b/i.test(s)) date.setDate(date.getDate()-1);
@@ -404,6 +407,7 @@ function parseOne(raw, baseDate){
     const all = [...s.matchAll(/(\d+(?:\.\d{1,2})?)/g)];
     if (all.length){ const last = all[all.length-1]; amount = +last[1]; s = s.slice(0,last.index) + ' ' + s.slice(last.index + last[0].length); }
   }
+  s = s.replace(/PeroduaKereta/g,' Perodua 524 ').replace(/\b(Perodua 524)\s+(?:pero?dua|produa)\b/gi,'$1').replace(/\b(?:pero?dua|produa)\s+(Perodua 524)/gi,'$1');
   let desc = s.replace(FILLER,' ').replace(/[^\p{L}\p{N}\s&\-'.]/gu,' ').replace(/\s+/g,' ').trim();
   if (!desc) desc = 'Perbelanjaan';
   desc = desc.charAt(0).toUpperCase() + desc.slice(1);
