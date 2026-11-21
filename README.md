@@ -9,6 +9,7 @@ Aplikasi web (PWA) untuk menjejak perbelanjaan harian menggunakan **suara** atau
 - 📅 Faham `semalam` / `kelmarin`
 - 📊 Dashboard: jumlah bulan ini, bajet & baki harian, trend 7/14/30 hari, carta kategori, insight & unjuran akhir bulan
 - ✏️ Edit / padam transaksi, butang **Batal** (undo), carian
+- 📄 **Laporan profesional** (`report.html`) — siap nama, no. rujukan, ringkasan eksekutif, carta, pecahan kategori, 5 belanja terbesar, senarai transaksi & ruang tandatangan. Pilih bulan / 7 hari / 30 hari / 3 bulan / tahunan, kemudian **Cetak / Simpan PDF** (A4)
 - ⬇️ Eksport CSV (boleh buka di Excel / Google Sheets)
 - 📱 Boleh dipasang di telefon (PWA) & berfungsi offline
 - 🔒 Data disimpan dalam peranti sahaja (localStorage)

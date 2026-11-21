@@ -57,6 +57,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .icon-btn:hover{border-color:var(--line-gold);color:var(--gold-l)}
 .icon-btn svg{width:20px;height:20px}
 .hdr-actions{display:flex;gap:8px}
+.rep-btn{width:auto;padding:0 14px;gap:8px;display:inline-flex;align-items:center;text-decoration:none;font-size:14px;font-weight:500;color:#1b1608;background:var(--g-gold);border:0;box-shadow:0 8px 20px -10px rgba(212,175,55,.7)}
+.rep-btn:hover{color:#1b1608}
+@media (max-width:420px){.rep-btn span{display:none}.rep-btn{padding:0;width:44px;justify-content:center}}
 
 /* grid */
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
@@ -224,6 +227,7 @@ footer{text-align:center;color:var(--faint);font-size:12px;margin-top:30px;lette
       <div><h1 class="serif gold-text">Belanja</h1><small id="today">—</small></div>
     </div>
     <div class="hdr-actions">
+      <a class="icon-btn rep-btn" href="report.html" title="Laporan" aria-label="Laporan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 17v-3M12 17v-6M15 17v-4"/></svg><span>Laporan</span></a>
       <button class="icon-btn" id="btnExport" title="Eksport CSV" aria-label="Eksport CSV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
       <button class="icon-btn" id="btnSettings" title="Tetapan" aria-label="Tetapan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
