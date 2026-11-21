@@ -353,6 +353,10 @@ const CATS = {
   lain:      {n:'Lain-lain', e:'✦', c:'#6f7380', k:[]}
 };
 const CAT_IDS = Object.keys(CATS);
+// transactions saved under a removed category (e.g. the old 'perodua') move to an existing one
+{ let moved = false;
+  for (const t of state.tx) if (!CATS[t.cat]) { t.cat = t.cat === 'perodua' ? 'transport' : 'lain'; moved = true; }
+  if (moved) store.save(state); }
 let manualCat = null; // null = auto
 
 function guessCat(desc){
