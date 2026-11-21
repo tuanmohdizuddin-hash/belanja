@@ -156,7 +156,7 @@ let state; try { state = JSON.parse(localStorage.getItem(KEY)) || {tx:[],budget:
 const saveState = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
 const CATS = {
-  makanan:{n:'Makanan & Minuman',e:'🍽',c:'#d4af37'}, perodua:{n:'Perodua 524',e:'🚙',c:'#6f97bb'}, transport:{n:'Pengangkutan',e:'🚌',c:'#9aa0ab'},
+  makanan:{n:'Makanan & Minuman',e:'🍽',c:'#d4af37'}, transport:{n:'Pengangkutan',e:'🚗',c:'#9aa0ab'},
   bil:{n:'Bil & Utiliti',e:'💡',c:'#b08d57'}, barang:{n:'Barang Dapur',e:'🛒',c:'#e0cc8f'},
   shopping:{n:'Shopping',e:'🛍',c:'#b76e79'}, hiburan:{n:'Hiburan',e:'🎬',c:'#6f7a90'},
   kesihatan:{n:'Kesihatan',e:'💊',c:'#7fae98'}, lain:{n:'Lain-lain',e:'✦',c:'#5a5e69'}
