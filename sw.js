@@ -1,5 +1,5 @@
-const CACHE = 'belanja-v5';
-const ASSETS = ['./', './index.html', './manifest.json', './icon.svg', './report.html'];
+const CACHE = 'belanja-v6';
+const ASSETS = ['./', './index.html', './manifest.json', './icon.svg', './report.html', './apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));
